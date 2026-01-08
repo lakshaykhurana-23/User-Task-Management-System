@@ -6,10 +6,10 @@ import com.example.Backend.Dto.User.UserResponse;
 import java.util.List;
 
 public interface UserService {
-    List<UserResponse> getAllUsers();
-    UserResponse getUserById(Long id);
+    List<UserResponse> getAllUsers(String authorizationHeader);
+    UserResponse getUserById(Long id , String authorizationHeader);
 
-    void deleteById(Long id);
+    void deleteById(Long id , String authorizationHeader);
 
-    UserResponse updateUserById(Long id , RegisterUserRequest addUserRequest);
+    UserResponse updateUserById(String authorizationHeader , Long id , RegisterUserRequest addUserRequest);
 }

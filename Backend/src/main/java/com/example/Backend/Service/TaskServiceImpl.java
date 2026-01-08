@@ -1,15 +1,18 @@
 package com.example.Backend.Service;
 
+import com.example.Backend.Dto.AuthenticatedUser;
 import com.example.Backend.Dto.Task.AddTaskRequest;
 import com.example.Backend.Dto.Task.TaskResponse;
 import com.example.Backend.Model.Entity.Task;
 import com.example.Backend.Model.Entity.User;
+import com.example.Backend.Model.Enum.Role;
 import com.example.Backend.Model.Enum.Status;
 import com.example.Backend.Repository.TaskRepository;
 import com.example.Backend.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -20,10 +23,15 @@ public class TaskServiceImpl implements TaskService{
     private final TaskRepository taskRepository;
     private final ModelMapper modelMapper;
     private final UserRepository userRepository;
+    private final AuthService authService;
 
     @Override
-    public List<TaskResponse> getAllTasks() {
-        List<Task> tasks = taskRepository.findAll();
+    public List<TaskResponse> getAllTasks(Status status , String authorizationHeader) {
+        AuthenticatedUser authenticatedUser = authService.authorize(authorizationHeader);
+        if(!((authenticatedUser.getRole().equals(Role.ADMIN)) || (authenticatedUser.getRole().equals(Role.MANAGER)))) throw new IllegalArgumentException("Unauthorised access");
+        List<Task> tasks ;
+        if(status == null) tasks = taskRepository.findAll();
+        else tasks = taskRepository.findByStatus(status);
         return tasks
                 .stream()
                 .map(task -> modelMapper.map(task , TaskResponse.class))
@@ -31,7 +39,9 @@ public class TaskServiceImpl implements TaskService{
     }
 
     @Override
-    public TaskResponse addNewTask(AddTaskRequest addTaskRequest) {
+    public TaskResponse addNewTask(String authorizationHeader, AddTaskRequest addTaskRequest) {
+        AuthenticatedUser authenticatedUser = authService.authorize(authorizationHeader);
+        if(!authenticatedUser.getRole().equals(Role.ADMIN)) throw new IllegalArgumentException("Unauthorised access");
         User user = userRepository.findById(addTaskRequest.getAssignedToUserId()).orElseThrow(()-> new IllegalArgumentException("not found"));
 
         Task task = Task.builder()
@@ -46,13 +56,17 @@ public class TaskServiceImpl implements TaskService{
     }
 
     @Override
-    public TaskResponse getTaskById(Long id) {
+    public TaskResponse getTaskById(Long id , String authorizationHeader) {
+        AuthenticatedUser authenticatedUser = authService.authorize(authorizationHeader);
+        if(!((authenticatedUser.getRole().equals(Role.ADMIN)) || (authenticatedUser.getRole().equals(Role.MANAGER)))) throw new IllegalArgumentException("Unauthorised access");
         Task task = taskRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Task not found with id "+id));
         return modelMapper.map(task , TaskResponse.class);
     }
 
     @Override
-    public void deleteById(Long id) {
+    public void deleteById(Long id , String authorizationHeader ){
+        AuthenticatedUser authenticatedUser = authService.authorize(authorizationHeader);
+        if(!authenticatedUser.getRole().equals(Role.ADMIN)) throw new IllegalArgumentException("Unauthorised access");
         if(!taskRepository.existsById(id)){
             throw new IllegalArgumentException("Task not found with id "+id);
         }
@@ -60,8 +74,9 @@ public class TaskServiceImpl implements TaskService{
     }
 
     @Override
-    public TaskResponse updateTaskById(Long id , AddTaskRequest addTaskRequest) {
-
+    public TaskResponse updateTaskById(Long id , AddTaskRequest addTaskRequest , String authorizationHeader) {
+        AuthenticatedUser authenticatedUser = authService.authorize(authorizationHeader);
+        if(!authenticatedUser.getRole().equals(Role.ADMIN)) throw new IllegalArgumentException("Unauthorised access");
         User user = userRepository.findById(addTaskRequest.getAssignedToUserId()).orElseThrow(()-> new IllegalArgumentException("User not found"));
         Task task = taskRepository.findById(id).orElseThrow(()-> new IllegalArgumentException("Task not found with id"+id));
         task.setTitle(addTaskRequest.getTitle());
@@ -74,27 +89,25 @@ public class TaskServiceImpl implements TaskService{
     }
 
     @Override
-    public List<TaskResponse> getAllTasksOfAUser(Long userId) {
+    public List<TaskResponse> getAllTasksOfAUser(String authorizationHeader) {
+        AuthenticatedUser authenticatedUser = authService.authorize(authorizationHeader);
+        Long userId = authenticatedUser.getId();
         User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("User not found with id "+userId));
         List<Task> tasks = taskRepository.findByAssignedToUserId(userId);
         return tasks.stream().map(task -> modelMapper.map(task,TaskResponse.class)).toList();
     }
 
     @Override
-    public void updateStatusofTaskById(Long id, Status newstatus) {
-        if(!taskRepository.existsById(id)){
-            throw new IllegalArgumentException("Task not found with id "+id);
+    public void updateStatusofTaskById(Long id, Status newstatus , String authorizationHeader) {
+        Task task = taskRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        AuthenticatedUser authenticatedUser = authService.authorize(authorizationHeader);
+        if(!((authenticatedUser.getRole().equals(Role.ADMIN) || (authenticatedUser.getId().equals(task.getAssignedToUser().getId()))))) {
+            throw new IllegalArgumentException("Unauthorised access");
         }
+//        if(!taskRepository.existsById(id)){
+//            throw new IllegalArgumentException("Task not found with id "+id);
+//        }
         taskRepository.updateStatusOfTask(id,newstatus);
     }
-
-    @Override
-    public List<TaskResponse> getAllTasksByStatus(Status status) {
-        List<Task> tasks = taskRepository.findByStatus(status);
-        return tasks.stream()
-                .map(task -> modelMapper.map(task,TaskResponse.class))
-                .toList();
-    }
-
 
 }

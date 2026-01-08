@@ -4,13 +4,13 @@ import com.example.Backend.Dto.Login.LoginRequest;
 import com.example.Backend.Dto.Login.LoginResponse;
 import com.example.Backend.Dto.User.RegisterUserRequest;
 import com.example.Backend.Dto.User.UserResponse;
+import com.example.Backend.Model.Enum.Role;
 import com.example.Backend.Service.AuthService;
 import com.example.Backend.Service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -28,5 +28,10 @@ public class AuthController {
     public LoginResponse verifyUser(@RequestBody LoginRequest loginRequest){
         return authService.verifyUser(loginRequest);
     }
+
+//    @GetMapping("/logout")
+//    public void logout(@RequestHeader("Authorization") String authorizationHeader){
+//        authService.logoutUser(authorizationHeader);
+//    }
 }
 

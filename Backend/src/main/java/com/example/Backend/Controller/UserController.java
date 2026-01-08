@@ -16,22 +16,23 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/users")
-    public List<UserResponse> getUsers(){
-        return userService.getAllUsers();
+    public List<UserResponse> getUsers(@RequestHeader("Authorization") String authorizationHeader){
+        System.out.println("api call");
+        return userService.getAllUsers(authorizationHeader);
     }
 
     @GetMapping("/users/{id}")
-    public UserResponse getUserById(@PathVariable Long id){
-        return userService.getUserById(id);
+    public UserResponse getUserById(@RequestHeader("Authorization") String authorizationHeader ,@PathVariable Long id){
+        return userService.getUserById(id,authorizationHeader);
     }
 
     @DeleteMapping("/users/{id}")
-    public void deleteUserById(@PathVariable Long id){
-        userService.deleteById(id);
+    public void deleteUserById(@PathVariable Long id , @RequestHeader("Authorization") String authorizationHeader){
+        userService.deleteById(id , authorizationHeader);
     }
 
     @PutMapping("/users/{id}")
-    public UserResponse updateUserById(@PathVariable Long id , @RequestBody RegisterUserRequest addUserRequest ){
-        return userService.updateUserById(id , addUserRequest);
+    public UserResponse updateUserById(@RequestHeader("Authorization") String authorizationHeader,@PathVariable Long id , @RequestBody RegisterUserRequest addUserRequest ){
+        return userService.updateUserById(authorizationHeader,id , addUserRequest);
     }
 }

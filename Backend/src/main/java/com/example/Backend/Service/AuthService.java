@@ -1,16 +1,20 @@
 package com.example.Backend.Service;
+import com.example.Backend.Dto.AuthenticatedUser;
 import com.example.Backend.Dto.Login.LoginRequest;
 import com.example.Backend.Dto.Login.LoginResponse;
 import com.example.Backend.Dto.User.RegisterUserRequest;
 import com.example.Backend.Dto.User.UserResponse;
 import com.example.Backend.Model.Entity.User;
+import com.example.Backend.Model.Enum.Role;
 import com.example.Backend.Repository.UserRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Key;
 import java.time.Instant;
@@ -25,24 +29,48 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
+    private final JwtService jwtService;
 
-    @Value("${jwt.secret}")
-    private String secret;
+    @Value("${AdminPassword}")
+    private String AdminPassword;
 
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+    @Value("${ManagerPassword}")
+    private String ManagerPassword;
+
+    public AuthenticatedUser authorize(String authHeader) {
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Missing token");
+        }
+
+        String token = authHeader.substring(7);
+
+        if (!jwtService.isTokenValid(token)) {
+            throw new RuntimeException("Invalid or expired token");
+        }
+
+        return AuthenticatedUser.builder()
+                .id(jwtService.extractUserId(token))
+                .email(jwtService.extractEmail(token))
+                .role(jwtService.extractRole(token))
+                .build();
     }
 
     public UserResponse createNewUser(RegisterUserRequest addUserRequest) {
+        if(addUserRequest.getRole().equals(Role.ADMIN)){
+            System.out.println(addUserRequest.getPassword());
+            if(!(addUserRequest.getPassword().equals(AdminPassword))) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+        if(addUserRequest.getRole().equals(Role.MANAGER)){
+            if(!addUserRequest.getPassword().equals(ManagerPassword)) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
         User user  = modelMapper.map(addUserRequest , User.class);
         user.setCreatedAt(LocalDateTime.now());
         userRepository.save(user);
-        return modelMapper.map(addUserRequest,UserResponse.class);
+        return modelMapper.map(user,UserResponse.class);
     }
 
     public LoginResponse verifyUser(LoginRequest loginRequest) {
-        System.out.println(loginRequest.getEmail());
-        System.out.println(loginRequest.getPassword());
         if(!userRepository.existsByEmail(loginRequest.getEmail())) {
             throw new IllegalArgumentException("User doesn't exist");
         }
@@ -50,18 +78,17 @@ public class AuthService {
         User user = userRepository.findByEmail(loginRequest.getEmail());
         if(!Objects.equals(user.getPassword(), loginRequest.getPassword())) throw new IllegalArgumentException("Wrong password");
 
-        String jwt = Jwts.builder()
-                .setSubject(user.getId().toString())
-                .setIssuedAt(Date.from(Instant.now()))
-                .setExpiration(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)))
-                .claim("userId",user.getId())
-                .signWith(getSigningKey())
-                .compact();
+        String jwt = jwtService.generateToken(user.getRole() , user.getId() , user.getEmail());
 
-        LoginResponse loginResponse = LoginResponse.builder()
+        return LoginResponse.builder()
                 .jwtToken(jwt)
                 .expiresIn(86400000L)
                 .build();
-        return loginResponse;
     }
+
+//    public void logoutUser(String authorizationHeader) {
+//        AuthenticatedUser authenticatedUser = authorize(authorizationHeader);
+//
+//
+//    }
 }

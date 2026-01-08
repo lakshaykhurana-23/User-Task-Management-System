@@ -19,43 +19,38 @@ public class TaskController {
     private final TaskService taskService;
 
     @GetMapping("/tasks")
-    public List<TaskResponse> getAllTasks(){
-        return taskService.getAllTasks();
+    public List<TaskResponse> getAllTasks(@RequestParam(required = false) Status status , @RequestHeader("Authorization") String authorizationHeader){
+        return taskService.getAllTasks(status ,authorizationHeader);
     }
 
     @PostMapping("/tasks")
-    public TaskResponse addNewTask(@RequestBody AddTaskRequest addTaskRequest){
-        return taskService.addNewTask(addTaskRequest);
+    public TaskResponse addNewTask(@RequestHeader("Authorization") String authorizationHeader,@RequestBody AddTaskRequest addTaskRequest){
+        return taskService.addNewTask(authorizationHeader,addTaskRequest);
     }
 
     @GetMapping("/tasks/{id}")
-    public TaskResponse getTaskById(@PathVariable Long id){
-        return taskService.getTaskById(id);
+    public TaskResponse getTaskById(@RequestHeader("Authorization") String authorizationHeader,@PathVariable Long id){
+        return taskService.getTaskById(id,authorizationHeader);
     }
 
     @DeleteMapping("/tasks/{id}")
-    public void deleteTaskById(@PathVariable Long id){
-        taskService.deleteById(id);
+    public void deleteTaskById(@RequestHeader("Authorization") String authorizationHeader,@PathVariable Long id){
+        taskService.deleteById(id , authorizationHeader);
     }
 
     @PutMapping("/tasks/{id}")
-    public TaskResponse updateTaskByid(@PathVariable Long id , @RequestBody AddTaskRequest addTaskRequest){
-        return taskService.updateTaskById(id,addTaskRequest);
+    public TaskResponse updateTaskByid(@RequestHeader("Authorization") String authorizationHeader,@PathVariable Long id , @RequestBody AddTaskRequest addTaskRequest){
+        return taskService.updateTaskById(id,addTaskRequest,authorizationHeader);
     }
 
-    @GetMapping("/tasks/my/{user_id}")
-    public List<TaskResponse> getTasksByUserId(@PathVariable Long user_id){
-        return taskService.getAllTasksOfAUser(user_id);
+    @GetMapping("/tasks/my/")
+    public List<TaskResponse> getTasksByUserId(@RequestHeader("Authorization") String authorizationHeader){
+        return taskService.getAllTasksOfAUser(authorizationHeader);
     }
 
     @PatchMapping("/tasks/{id}/status")
-    public void updateStatusOfTask(@PathVariable Long id , @RequestParam Status newstatus){
-        taskService.updateStatusofTaskById(id,newstatus);
-    }
-
-    @GetMapping("/tasks/status")
-    public List<TaskResponse> getTasksByStatus(@RequestParam Status status){
-        return taskService.getAllTasksByStatus(status);
+    public void updateStatusOfTask(@RequestHeader("Authorization") String authorizationHeader,@PathVariable Long id , @RequestParam Status newstatus){
+        taskService.updateStatusofTaskById(id,newstatus,authorizationHeader);
     }
 
 
