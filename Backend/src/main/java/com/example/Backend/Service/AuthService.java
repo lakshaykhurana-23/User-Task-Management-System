@@ -64,6 +64,7 @@ public class AuthService {
         if(addUserRequest.getRole().equals(Role.MANAGER)){
             if(!addUserRequest.getPassword().equals(ManagerPassword)) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
+        System.out.println("entering");
         User user  = modelMapper.map(addUserRequest , User.class);
         user.setCreatedAt(LocalDateTime.now());
         userRepository.save(user);
@@ -83,6 +84,7 @@ public class AuthService {
         return LoginResponse.builder()
                 .jwtToken(jwt)
                 .expiresIn(86400000L)
+                .role(user.getRole())
                 .build();
     }
 

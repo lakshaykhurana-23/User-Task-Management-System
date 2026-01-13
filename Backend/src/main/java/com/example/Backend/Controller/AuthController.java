@@ -13,6 +13,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
+@CrossOrigin(
+        origins = "*",
+        allowedHeaders = "*",
+        methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS }
+)
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {

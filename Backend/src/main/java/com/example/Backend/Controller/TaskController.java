@@ -14,6 +14,11 @@ import java.util.List;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
+@CrossOrigin(
+        origins = "http://localhost:5173",
+        allowedHeaders = "*",
+        methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS }
+)
 public class TaskController {
 
     private final TaskService taskService;
