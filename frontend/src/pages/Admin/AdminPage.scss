@@ -1,0 +1,42 @@
+/* Root layout */
+.admin-layout {
+  min-height: 100vh;
+  background-color: #f5f7fa;
+}
+
+/* Top navbar */
+.admin-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff;
+  padding: 0 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  &__left {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1677ff; // AntD primary blue
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* Main content section */
+.admin-content {
+  padding: 40px;
+  text-align: center;
+
+  h2 {
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  p {
+    color: #666;
+    font-size: 14px;
+  }
+}
